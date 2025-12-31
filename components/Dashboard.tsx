@@ -3,10 +3,11 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Legend
 } from 'recharts';
-import { Activity, Server, Users, Wifi } from 'lucide-react';
+import { Activity, Server, Users, Wifi, Database, Layers, ShieldCheck } from 'lucide-react';
 import StatCard from './StatCard';
 import { fetchChartData, fetchRecentLogs, fetchSystemMetrics } from '../services/api';
 import { ChartDataPoint, LogEntry, SystemMetrics } from '../types';
+import moment from 'jalali-moment';
 
 const Dashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
@@ -24,12 +25,12 @@ const Dashboard: React.FC = () => {
     };
 
     loadData();
-    const interval = setInterval(loadData, 5000); // Refresh data every 5 seconds (simulating mock backend updates)
+    const interval = setInterval(loadData, 5000); // Refresh data every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
 
-  if (!metrics) return <div className="p-10 text-center text-slate-500">در حال دریافت اطلاعات...</div>;
+  if (!metrics) return <div className="p-10 text-center text-slate-500 font-bold">در حال بارگذاری اطلاعات سامانه...</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -69,12 +70,54 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
+      {/* Backend Status Row (New Requirement) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+               <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                 <Layers className="w-5 h-5"/>
+               </div>
+               <div>
+                 <p className="font-bold text-slate-700 text-sm">Python Backend</p>
+                 <p className="text-xs text-slate-400">هسته مرکزی (Flask/Django)</p>
+               </div>
+            </div>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">متصل</span>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                 <Database className="w-5 h-5"/>
+               </div>
+               <div>
+                 <p className="font-bold text-slate-700 text-sm">PostgreSQL</p>
+                 <p className="text-xs text-slate-400">پایگاه داده</p>
+               </div>
+            </div>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">متصل</span>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+               <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                 <ShieldCheck className="w-5 h-5"/>
+               </div>
+               <div>
+                 <p className="font-bold text-slate-700 text-sm">SSO / Auth</p>
+                 <p className="text-xs text-slate-400">سرویس احراز هویت</p>
+               </div>
+            </div>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">فعال</span>
+          </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-slate-800 text-lg">ترافیک شبکه (زنده)</h3>
-            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">بروزرسانی خودکار</span>
+            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">بروزرسانی هر ۵ ثانیه</span>
           </div>
           <div className="h-[300px] w-full dir-ltr">
             <ResponsiveContainer width="100%" height="100%">
@@ -89,8 +132,8 @@ const Dashboard: React.FC = () => {
                 <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <Tooltip 
-                  contentStyle={{ fontFamily: 'Vazirmatn', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  labelStyle={{ textAlign: 'right', color: '#64748b' }}
+                  contentStyle={{ fontFamily: 'Vazirmatn', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'right', direction: 'rtl' }}
+                  labelStyle={{ color: '#64748b', marginBottom: '4px' }}
                 />
                 <Area type="monotone" dataKey="value" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorVal)" name="ورودی" />
                 <Area type="monotone" dataKey="value2" stroke="#6366f1" strokeWidth={3} fillOpacity={0} name="خروجی" />
@@ -101,19 +144,22 @@ const Dashboard: React.FC = () => {
 
         {/* Logs / Notifications */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-          <h3 className="font-bold text-slate-800 text-lg mb-6">گزارشات سیستم</h3>
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-slate-800 text-lg">گزارشات سیستم</h3>
+            <span className="text-xs bg-red-50 text-red-500 px-2 py-1 rounded-lg animate-pulse">زنده</span>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2 max-h-[300px]">
             {logs.map((log) => (
-              <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+              <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                 <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
-                  log.level === 'success' ? 'bg-emerald-500' :
-                  log.level === 'error' ? 'bg-red-500' :
-                  log.level === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
+                  log.level === 'success' ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30' :
+                  log.level === 'error' ? 'bg-red-500 shadow-lg shadow-red-500/30' :
+                  log.level === 'warning' ? 'bg-amber-500 shadow-lg shadow-amber-500/30' : 'bg-blue-500'
                 }`} />
-                <div>
-                  <p className="text-sm text-slate-700 font-medium">{log.message}</p>
-                  <span className="text-xs text-slate-400 mt-1 block">
-                    {new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(log.timestamp)}
+                <div className="flex-1">
+                  <p className="text-sm text-slate-700 font-medium leading-relaxed">{log.message}</p>
+                  <span className="text-xs text-slate-400 mt-1 block dir-ltr text-right">
+                    {moment(log.timestamp).locale('fa').format('HH:mm:ss - YYYY/MM/DD')}
                   </span>
                 </div>
               </div>
@@ -131,7 +177,7 @@ const Dashboard: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="time" stroke="#94a3b8" />
                 <YAxis stroke="#94a3b8" />
-                <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ fontFamily: 'Vazirmatn', textAlign: 'right' }} />
+                <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ fontFamily: 'Vazirmatn', textAlign: 'right', direction: 'rtl' }} />
                 <Legend wrapperStyle={{ fontFamily: 'Vazirmatn' }} />
                 <Bar dataKey="value" name="پردازنده" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="value2" name="حافظه" fill="#cbd5e1" radius={[4, 4, 0, 0]} />

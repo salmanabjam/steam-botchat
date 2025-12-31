@@ -1,4 +1,5 @@
 import { ChartDataPoint, LogEntry, SystemMetrics, User } from '../types';
+import moment from 'jalali-moment';
 
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -36,7 +37,7 @@ export const fetchChartData = async (): Promise<ChartDataPoint[]> => {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 60000); // Past minutes
     data.push({
-      time: new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(d),
+      time: moment(d).locale('fa').format('HH:mm'),
       value: Math.floor(Math.random() * 100),
       value2: Math.floor(Math.random() * 80),
     });
